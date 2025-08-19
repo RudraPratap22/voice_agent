@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Voice Synthesizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/style.css?v=3" />
+  </head>
+  <body>
+    <div class="command-center">
+      <h1 class="echo-bot-title">Echo Bot</h1>
+
+      <div class="board">
+        <aside class="sidebar">
+          <div class="sidebar-item">
+            <div class="avatar"></div>
+            <div class="meta">
+              <div class="title">Recent Session</div>
+              <div class="subtitle">Last interaction summary…</div>
+            </div>
+          </div>
+          <div class="sidebar-item">
+            <div class="avatar"></div>
+            <div class="meta">
+              <div class="title">Notes</div>
+              <div class="subtitle">Quick reminder entry…</div>
+            </div>
+          </div>
+          <div class="sidebar-item">
+            <div class="avatar"></div>
+            <div class="meta">
+              <div class="title">Tasks</div>
+              <div class="subtitle">What should I do today?</div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="chat">
+          <div class="chat-header">Echo Bot Plus</div>
+          <div class="chat-body" id="status-container"></div>
+          <div class="chat-footer">
+            <div class="composer">
+              <div class="composer-box">
+                <textarea id="composer-input" rows="1" placeholder="Ask anything... (Shift+Enter for new line)"></textarea>
+              </div>
+              <div class="composer-actions">
+                <button id="send-btn" class="icon-btn" title="Send">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+                <button id="start-record-btn" class="icon-btn" title="Start Recording">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+                <button id="stop-record-btn" class="icon-btn icon-btn--muted" title="Stop Recording" disabled>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="/static/script.js?v=2"></script>
+  </body>
+</html>

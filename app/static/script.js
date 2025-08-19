@@ -1,0 +1,191 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const micBtn = document.getElementById("mic-btn"); // optional legacy
+  const textInput = document.getElementById("text-input"); // legacy
+  const waveformLeft = document.getElementById("waveform-left");
+  const waveformRight = document.getElementById("waveform-right");
+  const statusContainer = document.getElementById("status-container");
+
+  const composer = document.getElementById("composer-input");
+  const sendBtn = document.getElementById("send-btn");
+
+  let currentAudio = null;
+
+  const startRecordBtn = document.getElementById("start-record-btn");
+  const stopRecordBtn = document.getElementById("stop-record-btn");
+  let mediaRecorder;
+  let audioChunks = [];
+
+  function populateWaveform(container) {
+    if (!container) return;
+    container.innerHTML = "";
+    for (let i = 0; i < 25; i++) {
+      const bar = document.createElement("div");
+      bar.classList.add("waveform-bar");
+      bar.style.animationDelay = `${Math.random() * -1.2}s`;
+      container.appendChild(bar);
+    }
+  }
+
+  function clearWaveforms() {
+    if (waveformLeft) waveformLeft.innerHTML = "";
+    if (waveformRight) waveformRight.innerHTML = "";
+  }
+
+  // Chat helpers
+  function appendBubble(text, role) {
+    const el = document.createElement("div");
+    el.className = `bubble ${role === "user" ? "bubble--user" : "bubble--bot"}`;
+    el.textContent = text;
+    statusContainer.appendChild(el);
+    statusContainer.scrollTop = statusContainer.scrollHeight;
+    return el;
+  }
+
+  function appendTyping() {
+    const el = document.createElement("div");
+    el.className = "bubble bubble--bot";
+    el.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+    statusContainer.appendChild(el);
+    statusContainer.scrollTop = statusContainer.scrollHeight;
+    return el;
+  }
+
+  // Inline processing
+  function setProcessing() {
+    const line = document.createElement("div");
+    line.className = "status-line";
+    line.textContent = "Processing…";
+    statusContainer.appendChild(line);
+  }
+
+  function setErr(msg) {
+    const box = document.createElement("div");
+    box.className = "bubble bubble--bot";
+    box.style.color = "#8ad3ff";
+    box.textContent = msg;
+    statusContainer.appendChild(box);
+  }
+
+  // Composer: autosize
+  if (composer) {
+    const autosize = () => {
+      composer.style.height = "auto";
+      composer.style.height = Math.min(180, composer.scrollHeight) + "px";
+    };
+    composer.addEventListener("input", autosize);
+    autosize();
+
+    composer.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (sendBtn) sendBtn.click();
+      }
+    });
+  }
+
+  // Text send flow
+  if (sendBtn && composer) {
+    sendBtn.addEventListener("click", async () => {
+      const prompt = (composer.value || "").trim();
+      if (!prompt) return;
+      appendBubble(prompt, "user");
+      composer.value = "";
+      composer.dispatchEvent(new Event("input"));
+
+      const typingEl = appendTyping();
+
+      try {
+        const response = await fetch("/llm/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+        const data = await response.json();
+        typingEl.remove();
+
+        if (!response.ok) throw new Error(data.detail || "Failed");
+
+        const llmText = (data.llm_text || "").trim();
+        if (llmText) appendBubble(llmText, "bot");
+
+        const urls = data.audio_urls || [];
+        if (urls.length > 0) {
+          // play sequentially
+          for (const u of urls) {
+            await new Promise((resolve, reject) => {
+              const a = new Audio(u);
+              a.addEventListener("ended", resolve);
+              a.addEventListener("error", () => reject(new Error("Audio playback error")));
+              a.play().catch(reject);
+            });
+          }
+        }
+      } catch (err) {
+        typingEl.remove();
+        setErr(err.message || "Request failed");
+      }
+    });
+  }
+
+  // Voice flow
+  if (startRecordBtn) {
+    startRecordBtn.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.addEventListener("dataavailable", (event) => { audioChunks.push(event.data); });
+        mediaRecorder.addEventListener("stop", async () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+          const formData = new FormData();
+          formData.append("file", audioBlob, "recording.wav");
+
+          const typingEl = appendTyping();
+
+          try {
+            const response = await fetch("/llm/query", { method: "POST", body: formData });
+            const data = await response.json();
+            typingEl.remove();
+            if (!response.ok) throw new Error(data.detail || "Pipeline failed");
+
+            const transcript = (data.transcript || "").trim();
+            const llmText = (data.llm_text || "").trim();
+            if (transcript) appendBubble(transcript, "user");
+            if (llmText) appendBubble(llmText, "bot");
+
+            const urls = data.audio_urls || [];
+            if (urls.length > 0) {
+              for (const u of urls) {
+                await new Promise((resolve, reject) => {
+                  const a = new Audio(u);
+                  a.addEventListener("ended", resolve);
+                  a.addEventListener("error", () => reject(new Error("Audio playback error")));
+                  a.play().catch(reject);
+                });
+              }
+            }
+          } catch (err) {
+            setErr(err.message || "Pipeline failed");
+          }
+        });
+
+        mediaRecorder.start();
+        startRecordBtn.disabled = true;
+        if (stopRecordBtn) stopRecordBtn.disabled = false;
+      } catch (error) {
+        console.error("Error accessing microphone:", error);
+        alert("Microphone access is required. Please allow access and refresh the page.");
+      }
+    });
+  }
+
+  if (stopRecordBtn) {
+    stopRecordBtn.addEventListener("click", () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+      if (startRecordBtn) startRecordBtn.disabled = false;
+      if (stopRecordBtn) stopRecordBtn.disabled = true;
+    });
+  }
+});
