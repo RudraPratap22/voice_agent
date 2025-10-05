@@ -11,7 +11,7 @@ __pycache__/
 .Python
 
 # Audio uploads (if you don't want to track them)
-uploads/
+recordings/
 
 # IDE files
 .vscode/

@@ -88,6 +88,22 @@ body {
 .typing span:nth-child(3){ animation-delay: .3s; }
 @keyframes blink { 0%, 80%, 100% { opacity: .2; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
 
+/* LLM Streaming indicator */
+.llm-streaming {
+  border-left: 3px solid var(--accent) !important;
+  background: linear-gradient(90deg, var(--panel-2) 0%, rgba(88,166,255,0.1) 100%) !important;
+}
+.llm-streaming::after {
+  content: "▋";
+  color: var(--accent);
+  animation: cursor-blink 1s infinite;
+  margin-left: 2px;
+}
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 /* Existing helpers retained (waveforms, status-line, legacy results) */
 .waveform-container { flex-grow: 1; height: 100%; display: flex; align-items: center; gap: 3px; }
 #waveform-left { justify-content: flex-end; }
