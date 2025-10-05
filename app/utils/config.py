@@ -10,3 +10,4 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 MAX_MURF_CHARS = 3000
 DEFAULT_VOICE = "en-US-natalie"
 STATIC_DIR = os.getenv("STATIC_DIR", "app/static")
+RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", "app/recordings")
